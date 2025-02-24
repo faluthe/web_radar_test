@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Radar</title>
+    <style>
+        #radarCanvas {
+            border: 1px solid #ccc;
+            background-color: #111;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="radarCanvas" width="400" height="400"></canvas>
+    <script>
+        const ws = new WebSocket("ws://localhost:3000/ws");
+        const canvas = document.getElementById("radarCanvas");
+        const ctx = canvas.getContext("2d");
+        let targets = [];
+
+        ws.onmessage = function (event) {
+            try {
+                targets = JSON.parse(event.data);
+                drawRadar();
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        function drawRadar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let t of targets) {
+                drawTarget(t);
+            }
+        }
+
+        function drawTarget(target) {
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = "red";
+            ctx.fill();
+        }
+    </script>
+</body>
+
+</html>
