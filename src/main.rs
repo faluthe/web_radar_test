@@ -1,19 +1,19 @@
-use std::{
-    env,
-    sync::{Arc, Mutex},
+use crate::{
+    state::{AppState, Target},
+    updater::spawn_updater,
+    ws_handler::websocket_handler,
 };
 use axum::{
     routing::{get, get_service},
     Router,
 };
 use log::info;
+use std::{
+    env,
+    sync::{Arc, Mutex},
+};
 use tokio::{net::TcpListener, sync::broadcast};
 use tower_http::services::ServeDir;
-use crate::{
-    state::{AppState, Target},
-    updater::spawn_updater,
-    ws_handler::websocket_handler,
-};
 
 mod state;
 mod updater;
@@ -44,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
     info!("Starting update loop");
     spawn_updater(app_state.clone());
 
-    // Build our router
+    // Build router
     let router = Router::new()
         .route("/ws", get(websocket_handler))
         .fallback_service(get_service(ServeDir::new("./static")))
@@ -53,8 +53,7 @@ async fn main() -> anyhow::Result<()> {
     // Start the server
     info!("Starting server on http://{}:{}", ADDRESS, PORT);
     axum::serve(
-        TcpListener::bind(format!("{}:{}", ADDRESS, PORT))
-            .await?,
+        TcpListener::bind(format!("{}:{}", ADDRESS, PORT)).await?,
         router.into_make_service(),
     )
     .await?;

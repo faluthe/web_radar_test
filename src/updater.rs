@@ -1,4 +1,4 @@
-use log::info;
+use log::{error, info};
 use std::time::Duration;
 use tokio::time;
 
@@ -14,19 +14,24 @@ pub fn spawn_updater(app_state: AppState) {
             let mut rng = rand::rng();
 
             // Lock and update targets
-            let mut targets = app_state.targets.lock().unwrap();
+            let mut targets = match app_state.targets.lock(){
+                Ok(gaurd) => gaurd,
+                Err(e) => {
+                    error!("Failed to lock targets: {:?}", e);
+                    continue;
+                }
+            };
             for target in targets.iter_mut() {
                 target.x = rng.random_range(-2000..2001);
                 target.y = rng.random_range(-2000..2001);
             }
 
             // Broadcast the updated targets to all active WebSocket clients
-            if let Err(e) = app_state.tx.send(targets.clone()) {
-                // If no receivers, send() fails, but we can just log or ignore
-                info!("No active subscribers for broadcast: {:?}", e);
+            if app_state.tx.send(targets.clone()).is_ok() {
+                info!("Updated targets: {:?}", *targets);
+            } else {
+                error!("Failed to broadcast updated targets");
             }
-
-            info!("Updated targets: {:?}", *targets);
         }
     });
 }
