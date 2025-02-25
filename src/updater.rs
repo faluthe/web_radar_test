@@ -16,8 +16,8 @@ pub fn spawn_updater(app_state: AppState) {
             // Lock and update targets
             let mut targets = app_state.targets.lock().unwrap();
             for target in targets.iter_mut() {
-                target.x = rng.random_range(0..101);
-                target.y = rng.random_range(0..101);
+                target.x = rng.random_range(-2000..2001);
+                target.y = rng.random_range(-2000..2001);
             }
 
             // Broadcast the updated targets to all active WebSocket clients

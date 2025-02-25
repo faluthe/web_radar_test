@@ -1,51 +1,78 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <meta charset="utf-8">
-    <title>Radar</title>
-    <style>
-        #radarCanvas {
-            border: 1px solid #ccc;
-            background-color: #111;
-            display: block;
-            margin: 0 auto;
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>Radar</title>
+  <style>
+    html, body {
+      margin: 0; 
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+    }
+    #radarCanvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
 </head>
-
 <body>
-    <canvas id="radarCanvas" width="400" height="400"></canvas>
-    <script>
-        const ws = new WebSocket("ws://localhost:3000/ws");
-        const canvas = document.getElementById("radarCanvas");
-        const ctx = canvas.getContext("2d");
-        let targets = [];
+  <canvas id="radarCanvas"></canvas>
 
-        ws.onmessage = function (event) {
-            try {
-                targets = JSON.parse(event.data);
-                drawRadar();
-            } catch (error) {
-                console.error(error);
-            }
-        };
+  <script>
+    const canvas = document.getElementById("radarCanvas");
+    const ctx = canvas.getContext("2d");
+    const ws = new WebSocket("ws://localhost:3000/ws");
+    let targets = [];
 
-        function drawRadar() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            for (let t of targets) {
-                drawTarget(t);
-            }
+    ws.onmessage = function (event) {
+        try {
+            targets = JSON.parse(event.data);
+            drawRadar();
+        } catch (error) {
+            console.error(error);
         }
+    };
 
-        function drawTarget(target) {
-            ctx.beginPath();
-            ctx.arc(target.x, target.y, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = "red";
-            ctx.fill();
-        }
-    </script>
+    const radarImg = new Image();
+    radarImg.src = "test_radar.png";
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drawRadar();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    radarImg.onload = function () {
+      resizeCanvas();
+    };
+
+    const minCoord = -2000;
+    const maxCoord = 2000;
+    const worldRange = maxCoord - minCoord;
+    function worldToCanvas(world, canvas) {
+        const norm = (world - minCoord) / worldRange;
+        return norm * canvas;
+    }
+
+    function drawRadar() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(radarImg, 0, 0, canvas.width, canvas.height);
+
+      for (let t of targets) {
+        let cx = worldToCanvas(t.x, canvas.width);
+        let cy = worldToCanvas(t.y, canvas.height);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "red";
+        ctx.fill();
+      }
+    }
+  </script>
 </body>
-
 </html>
