@@ -2,7 +2,6 @@ use std::{
     env,
     sync::{Arc, Mutex},
 };
-
 use axum::{
     routing::{get, get_service},
     Router,
@@ -10,22 +9,21 @@ use axum::{
 use log::info;
 use tokio::{net::TcpListener, sync::broadcast};
 use tower_http::services::ServeDir;
-
-mod state;
-mod updater;
-mod ws_handler;
-
 use crate::{
     state::{AppState, Target},
     updater::spawn_updater,
     ws_handler::websocket_handler,
 };
 
+mod state;
+mod updater;
+mod ws_handler;
+
 const ADDRESS: &str = "0.0.0.0";
 const PORT: u16 = 3000;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     // Init logging
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info");
@@ -56,10 +54,10 @@ async fn main() {
     info!("Starting server on http://{}:{}", ADDRESS, PORT);
     axum::serve(
         TcpListener::bind(format!("{}:{}", ADDRESS, PORT))
-            .await
-            .unwrap(),
+            .await?,
         router.into_make_service(),
     )
-    .await
-    .unwrap();
+    .await?;
+
+    Ok(())
 }

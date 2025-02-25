@@ -13,3 +13,4 @@ serde = { version = "1.0.218", features = ["derive"] }
 tower-http = { version = "0.6.2", features = ["fs"] }
 rand = "0.9.0"
 futures = "0.3.31"
+anyhow = "1.0.96"
